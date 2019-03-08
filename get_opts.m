@@ -3,7 +3,7 @@ function opts = get_opts()
 addpath(genpath('src'))
 
 opts = [];
-opts.dataset_path    = 'F:/DukeMTMC/';
+opts.dataset_path    = '/opt/MATLAB/deepcc-workspace/DukeMTMC/';
 opts.gurobi_path     = 'C:/gurobi800/win64/matlab';
 opts.experiment_root = 'experiments';
 opts.experiment_name = 'demo';
@@ -20,7 +20,7 @@ opts.current_camera = -1;
 opts.world = 0;
 opts.ROIs = getROIs();
 opts.minimum_trajectory_length = 100;
-opts.optimization = 'BIPCC'; 
+opts.optimization = 'KL';
 opts.use_groupping = 1;
 opts.num_cam = 8;
 opts.sequence = 2;

@@ -3,22 +3,22 @@ dataset.numCameras = 8;
 dataset.videoParts = [9, 9, 9, 9, 9, 8, 8, 9];
 
 % Set these accordingly
-dataset.savePath = 'F:/DukeMTMC/'; % Where to store DukeMTMC (160 GB)
+dataset.savePath = '/opt/MATLAB/deepcc-workspace/DukeMTMC/'; % Where to store DukeMTMC (160 GB)
 
 % cleanup dataset.savePath
 dataset.savePath = cleanupPath(dataset.savePath);
 fprintf(['Download path: ' dataset.savePath '\n']);
 
-GET_ALL               = false; % Set this to true if you want to download everything
+GET_ALL               = true; % Set this to true if you want to download everything
 GET_GROUND_TRUTH      = true;
 GET_CALIBRATION       = true;
 GET_VIDEOS            = true;
-GET_DPM               = false;
+GET_DPM               = true;
 GET_OPENPOSE          = true;
-GET_FGMASKS           = false;
+GET_FGMASKS           = true;
 GET_REID              = true;
-GET_VIDEO_REID        = false;
-GET_FRAMES            = false; % Not included in GET_ALL to save space, must be manually set on
+GET_VIDEO_REID        = true;
+GET_FRAMES            = true; % Not included in GET_ALL to save space, must be manually set on
 
 
 %% Create folder structure
@@ -107,17 +107,17 @@ if GET_ALL || GET_FGMASKS
     fprintf('Extracting masks...\n');
     for cam = 1:dataset.numCameras
         filename = sprintf('%smasks/camera%d.tar.gz',dataset.savePath,cam);
-        fprintf([filename '\n']);
-        untar(filename, [dataset.savePath 'masks']);
+        fprintf([filename ' extracting to ' dataset.savePath 'masks' '\n']);
+        %untar(filename, [dataset.savePath 'masks']);
     end
-    
+ 
     % Delete temporary files
-    fprintf('Deleting temporary files...\n');
-    for cam = 1:dataset.numCameras
-        filename = sprintf('%smasks/camera%d.tar.gz',dataset.savePath,cam);
-        fprintf([filename '\n']);
-        delete(filename);
-    end
+    % fprintf('Deleting temporary files...\n');
+    %for cam = 1:dataset.numCameras
+    %    filename = sprintf('%smasks/camera%d.tar.gz',dataset.savePath,cam);
+    %    fprintf([filename '\n']);
+    %    delete(filename);
+    %end
 end
 
 %% Download DukeMTMC-reID
@@ -125,7 +125,13 @@ if GET_ALL || GET_REID
     url = 'http://vision.cs.duke.edu/DukeMTMC/data/misc/DukeMTMC-reID.zip';
     filename = sprintf('%s/%s',dataset.savePath,'DukeMTMC-reID.zip');
     downloadFunc(filename,url)
-    unzip(filename, dataset.savePath);
+
+    unpackdir = sprintf('%s/%s', dataset.savePath, 'DukeMTMC-reID');
+    if ~isdir(unpackdir)
+        unzip(filename, dataset.savePath);
+    else
+        fprintf(['skipping unzip']);
+    end;
 end
 
 %% Download DukeMTMC-VideoReID
@@ -133,13 +139,20 @@ if GET_ALL || GET_VIDEO_REID
     url = 'http://vision.cs.duke.edu/DukeMTMC/data/misc/DukeMTMC-VideoReID.zip';
     filename = sprintf('%s/%s',dataset.savePath,'DukeMTMC-VideoReID.zip');
     downloadFunc(filename,url)
-    unzip(filename, dataset.savePath);
+    
+    unpackdir = sprintf('%s/%s', dataset.savePath, 'DukeMTMC-VideoReID');
+    if ~isdir(unpackdir)
+    	unzip(filename, dataset.savePath);
+    else
+        fprintf(['skipping unzip' ]);
+    end;
 end
 
 %% Extract frames
 if GET_FRAMES
     fprintf('Extracting frames...\n');
-    ffmpegPath = 'C:/ffmpeg/bin/ffmpeg.exe';
+    %ffmpegPath = 'C:/ffmpeg/bin/ffmpeg.exe';
+    ffmpegPath = 'ffmpeg';
     currDir = pwd;
     for cam = 1:dataset.numCameras
         cd([dataset.savePath 'videos/camera' num2str(cam)]); 
@@ -147,6 +160,7 @@ if GET_FRAMES
         for k = 1:dataset.videoParts(cam), filelist = [filelist, '|0000', num2str(k), '.MTS']; end; 
         framesDir = [dataset.savePath 'frames/camera' num2str(cam) '/%06d.jpg'];
         command = [ffmpegPath ' -i ' filelist '" -qscale:v 1 -f image2 ' framesDir];
+        fprintf(['executing command: ' command])
         system(command);
     end
 end
